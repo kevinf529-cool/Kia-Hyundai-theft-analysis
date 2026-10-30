@@ -1,0 +1,378 @@
+---
+title: 'Kia and Hyundai Vehicle Thefts: A Data Story'
+author: "Kevin Feracho"
+output:
+  pdf_document: default
+  html_document: default
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE
+)
+```
+
+
+# Introduction
+
+Vehicle thefts involving Kia and Hyundai models increased sharply across several U.S. cities. This project uses four provided datasets to examine where thefts rose the most, how the trend changed over time, and which communities experienced the greatest impact.
+
+The intended audience is local government officials, law enforcement agencies, and vehicle owners. The purpose is not only to describe the increase in thefts, but also to support practical prevention efforts. The call to action is for cities and manufacturers to expand public awareness, steering-wheel-lock distribution, software updates, and targeted prevention programs in the hardest-hit areas.
+
+# Load Required Libraries
+```{r, echo=FALSE}
+library(tidyverse)
+library(readxl)
+library(treemap)
+library(lubridate)
+library(scales)
+```
+
+```{r, echo=FALSE}
+milwaukee <- read_csv("KiaHyundaiMilwaukeeData.csv")
+
+thefts <- read_csv("kiaHyundaiThefts (1).csv")
+
+map_data <- read_csv("carTheftsMap (1).csv")
+
+vice_data <- read_excel("Motherboard VICE News Kia Hyundai Theft Data.xlsx")
+```
+
+```{r, include=FALSE}
+glimpse(milwaukee)
+
+glimpse(thefts)
+
+glimpse(map_data)
+
+glimpse(vice_data)
+```
+
+# Explore the Variables
+
+Before creating visualizations, each dataset was examined to identify the variables most appropriate for trend analysis, geographic comparisons, and supporting the overall narrative. Understanding the available information ensured that each visualization answered a specific question about the increase in Kia and Hyundai vehicle thefts.
+
+```{r, include=FALSE}
+cat("===== Milwaukee Dataset =====\n")
+print(names(milwaukee))
+
+cat("\n===== Thefts Dataset =====\n")
+print(names(thefts))
+
+cat("\n===== Map Dataset =====\n")
+print(names(map_data))
+
+cat("\n===== VICE Dataset =====\n")
+print(names(vice_data))
+```
+
+# Review the Milwaukee Dataset
+
+The Milwaukee dataset serves as the starting point for the analysis because it provides a monthly record of Kia and Hyundai thefts compared to all other vehicle thefts. This dataset establishes the foundation for the visualizations that follow by capturing how theft activity changed over time.
+
+```{r, include=FALSE}
+head(milwaukee)
+
+summary(milwaukee)
+```
+
+# Visualization 1: The Theft Surge Begins
+
+The first visualization examines how Kia and Hyundai thefts changed over time in Milwaukee. A line chart makes the monthly changes easy to follow and helps identify when the sharpest increases occurred.
+
+```{r}
+milwaukee <- milwaukee %>%
+  mutate(
+    date = as.Date(
+      paste("01", month, year),
+      format = "%d %b %Y"
+    )
+  )
+
+ggplot(
+  milwaukee,
+  aes(
+    x = date,
+    y = countKiaHyundaiThefts
+  )
+) +
+  geom_line(
+    color = "#C0392B",
+    linewidth = 1.2
+  ) +
+  geom_point(
+    color = "#C0392B",
+    size = 2
+  ) +
+  labs(
+    title = "Monthly Kia and Hyundai Thefts in Milwaukee",
+    subtitle = "2019–2022",
+    x = "Year",
+    y = "Number of Thefts"
+  ) +
+  theme_minimal()
+```
+
+### Key Takeaways 
+
+The line chart illustrates how Kia and Hyundai thefts changed throughout the study period in Milwaukee. While theft activity fluctuated from month to month, the overall trend shows a substantial increase in thefts over time. This visualization establishes the foundation for the story by demonstrating that the increase was not isolated to a single month but developed into a sustained pattern.
+
+### Moving Beyond Milwaukee 
+
+The increase in Kia and Hyundai thefts is only part of the story. An equally important question is whether these vehicles made up a larger share of all vehicle thefts over time. Examining the percentage of thefts involving Kia and Hyundai provides additional context and helps illustrate how the problem evolved throughout the study period.
+
+# Visualization 2: A Growing Share of Vehicle Theft
+
+Looking only at the number of thefts does not provide the full picture. This area chart examines whether Kia and Hyundai vehicles represented a growing share of all vehicle thefts in Milwaukee and shows how that percentage changed over time.
+
+```{r}
+ggplot(
+  milwaukee,
+  aes(
+    x = date,
+    y = percentKiaHyundai
+  )
+) +
+  geom_area(
+    fill = "#2C7FB8",
+    alpha = 0.75
+  ) +
+  geom_line(
+    color = "#1B4F72",
+    linewidth = 1
+  ) +
+  scale_y_continuous(
+    labels = scales::percent_format(accuracy = 1)
+  ) +
+  labs(
+    title = "Percentage of Vehicle Thefts Involving Kia and Hyundai",
+    subtitle = "Milwaukee (2019–2022)",
+    x = "Year",
+    y = "Percent of Vehicle Thefts"
+  ) +
+  theme_minimal()
+```
+
+### Key Takeaways
+
+The area chart illustrates how the proportion of vehicle thefts involving Kia and Hyundai models changed throughout the study period. Rather than examining the total number of thefts, this visualization emphasizes the growing share of thefts associated with these vehicles. The increasing percentage suggests that Kia and Hyundai thefts became a larger component of Milwaukee's overall vehicle theft problem, reinforcing the need for targeted prevention efforts.
+
+### Expanding the Story
+
+Milwaukee experienced a major shift in the types of vehicles being stolen, but the problem was not limited to one city. Comparing locations across the country can reveal whether similar patterns occurred elsewhere and identify which communities experienced the largest overall theft totals.
+
+# Visualization 3: Not Every City Was Affected Equally
+
+The increase in Kia and Hyundai thefts was not unique to Milwaukee. To better understand the broader impact of the problem, the next visualization compares total Kia and Hyundai thefts with other vehicle thefts across multiple cities during 2022. A stacked bar chart highlights both the overall number of thefts and the contribution of Kia and Hyundai vehicles within each city.
+
+```{r}
+city_totals <- thefts %>%
+  filter(year == 2022) %>%
+  mutate(
+    Location = paste(city, state, sep = ", ")
+  ) %>%
+  group_by(Location) %>%
+  summarise(
+    `Kia and Hyundai` = sum(countKiaHyundaiThefts),
+    `Other Vehicles` = sum(countOtherThefts),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(`Kia and Hyundai`)) %>%
+  slice_head(n = 10)
+
+city_totals_long <- city_totals %>%
+  pivot_longer(
+    cols = c(`Kia and Hyundai`, `Other Vehicles`),
+    names_to = "Vehicle_Type",
+    values_to = "Thefts"
+  )
+
+ggplot(
+  city_totals_long,
+  aes(
+    x = reorder(Location, Thefts, sum),
+    y = Thefts,
+    fill = Vehicle_Type
+  )
+) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Cities Most Affected by Kia and Hyundai Thefts",
+    subtitle = "Comparison of Kia/Hyundai thefts with all other vehicle thefts (2022)",
+    x = "",
+    y = "Number of Thefts",
+    fill = "Vehicle Type"
+  ) +
+  theme_minimal()
+```
+
+### Key Takeaways
+
+The stacked bar chart shows that the impact of Kia and Hyundai thefts varied across cities. Some locations reported much larger Kia and Hyundai theft totals than others, while the share of thefts involving other vehicle brands also differed by location. This comparison shows that the problem extended beyond Milwaukee but did not affect every city in the same way.
+
+### Looking Beyond Individual Cities
+
+City-level totals show where Kia and Hyundai thefts were especially common, but they do not fully explain how vehicle theft changed across police jurisdictions. The next visualization uses agency-level data to identify communities that experienced the largest increases in vehicle theft.
+
+# Visualization 4: Communities Hit the Hardest
+
+City totals show where Kia and Hyundai thefts were especially common, but agency-level data provides a broader view of how vehicle theft changed across different communities. This treemap highlights the police jurisdictions that experienced the largest percentage increases in vehicle theft between 2019 and 2022.
+
+```{r}
+treemap_data <- map_data %>%
+  filter(
+    !is.na(percentChange2019to2022),
+    percentChange2019to2022 > 0,
+    !is.na(geo_name)
+  ) %>%
+  arrange(desc(percentChange2019to2022)) %>%
+  slice_head(n = 20) %>%
+  mutate(
+    percent_change = round(percentChange2019to2022 * 100, 1),
+    label = paste0(geo_name, "\n", percent_change, "%")
+  )
+
+treemap(
+  treemap_data,
+  index = "label",
+  vSize = "percent_change",
+  title = "Communities Hit the Hardest",
+  fontsize.labels = 10,
+  fontcolor.labels = "white",
+  bg.labels = "transparent",
+  border.col = "white",
+  palette = "Blues"
+)
+```
+
+### Key Takeaways
+
+The treemap shows that several police jurisdictions experienced sharp increases in vehicle theft between 2019 and 2022. The largest blocks represent the communities with the greatest percentage growth. This view helps identify locations where theft prevention resources, public awareness efforts, and partnerships with automobile manufacturers may be especially important.
+
+### From Growth to Composition
+
+The agency-level data reveals where vehicle theft increased the fastest, but percentage growth does not show how Kia and Hyundai vehicles fit into the broader theft problem. The next visualization returns to Milwaukee and examines the share of total vehicle thefts involving these two brands.
+
+# Visualization 5: The Growing Share of Vehicle Theft
+
+Although vehicle theft affected many communities, Kia and Hyundai models became a particularly important part of Milwaukee's theft problem. This donut chart compares Kia and Hyundai thefts with all other vehicle thefts during the study period to illustrate their overall contribution.
+
+```{r}
+donut_data <- milwaukee %>%
+  summarise(
+    `Kia and Hyundai` = sum(countKiaHyundaiThefts),
+    `Other Vehicles` = sum(countOtherThefts)
+  ) %>%
+  pivot_longer(
+    everything(),
+    names_to = "Vehicle_Type",
+    values_to = "Thefts"
+  ) %>%
+  mutate(
+    Percent = Thefts / sum(Thefts),
+    Label = scales::percent(Percent, accuracy = 0.1)
+  )
+
+ggplot(
+  donut_data,
+  aes(x = 2, y = Thefts, fill = Vehicle_Type)
+) +
+  geom_col(color = "white") +
+  coord_polar(theta = "y") +
+  xlim(0.5, 2.5) +
+  geom_text(
+    aes(label = Label),
+    position = position_stack(vjust = 0.5),
+    color = "white",
+    fontface = "bold",
+    size = 5
+  ) +
+  labs(
+    title = "How Large Was the Kia and Hyundai Problem?",
+    fill = "Vehicle Type"
+  ) +
+  theme_void()
+```
+
+### Key Takeaways
+
+The donut chart shows that Kia and Hyundai vehicles accounted for approximately 48% of all reported vehicle thefts in Milwaukee during the study period. Although other vehicle brands still represented a slightly larger share of thefts, Kia and Hyundai vehicles alone made up nearly half of all reported incidents. This finding highlights how significant these two manufacturers became within Milwaukee's overall vehicle theft problem and reinforces the need for targeted prevention strategies.
+
+### Looking at the National Picture
+
+The Milwaukee and city-level analyses demonstrate how severely some communities were affected, but they do not capture broader national trends. The final visualization uses the VICE dataset to examine theft patterns across multiple cities and places the Milwaukee findings into a larger national context.
+
+# Visualization 6: National Trends Continue
+
+The final visualization compares monthly Kia and Hyundai thefts across four U.S. cities. This broader view helps determine whether the sharp increases observed in Milwaukee were part of a larger pattern. A line chart is used because it makes changes over time and differences among cities easier to follow.
+
+```{r}
+national_data <- vice_data %>%
+  transmute(
+    Date = as.Date(`...1`),
+    Denver = suppressWarnings(as.numeric(Denver)),
+    `El Paso` = suppressWarnings(as.numeric(`El Paso`)),
+    Portland = suppressWarnings(as.numeric(Portland)),
+    Atlanta = suppressWarnings(as.numeric(Atlanta))
+  ) %>%
+  pivot_longer(
+    cols = -Date,
+    names_to = "City",
+    values_to = "Thefts"
+  ) %>%
+  filter(
+    !is.na(Date),
+    !is.na(Thefts)
+  )
+
+ggplot(
+  national_data,
+  aes(
+    x = Date,
+    y = Thefts,
+    color = City
+  )
+) +
+  geom_line(linewidth = 1.2) +
+  scale_x_date(
+    date_breaks = "1 year",
+    date_labels = "%Y"
+  ) +
+  scale_y_continuous(
+    labels = scales::comma
+  ) +
+  labs(
+    title = "Kia and Hyundai Theft Trends Across Selected U.S. Cities",
+    subtitle = "Monthly reported thefts from 2019 through 2023",
+    x = "Year",
+    y = "Number of Thefts",
+    color = "City"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "right",
+    panel.grid.minor = element_blank()
+  )
+```
+
+### Key Takeaways
+
+The four cities experienced different theft patterns, but the chart shows that the increase was not limited to Milwaukee. Denver recorded the largest sustained rise among the selected cities, while Portland and Atlanta also experienced noticeable increases later in the study period. El Paso remained lower than the other cities but still showed changes over time.
+
+These differences demonstrate that Kia and Hyundai thefts did not affect every community in the same way. However, the presence of rising theft levels across several locations supports the conclusion that the issue extended beyond a single city.
+
+# Design Considerations
+
+The visualizations were designed to communicate information clearly while minimizing unnecessary distractions. A consistent theme and color palette were used throughout the notebook to improve readability and create a cohesive presentation. Colors were selected to distinguish categories rather than decorate the charts, and descriptive titles and axis labels were included to ensure each visualization could be understood independently. White space and consistent spacing between figures help guide the reader through the story one visualization at a time.
+
+# Ethical Considerations
+
+The analysis relied on publicly available datasets describing reported vehicle thefts. No personally identifiable information was included, reducing privacy concerns. Some preprocessing was required to prepare the data for visualization, including converting dates and removing incomplete records used only for plotting. Because reporting practices may differ among jurisdictions, the results should be interpreted as observed trends rather than exact comparisons between cities. No records were intentionally excluded to influence the conclusions, and the visualizations were designed to accurately represent the underlying data.
+
+# Conclusion
+
+The visualizations show that Kia and Hyundai thefts grew from a relatively small portion of Milwaukee's vehicle theft problem into a much larger concern. Similar patterns appeared in other cities, although the timing and severity differed by location. Police agency data also showed that some communities experienced especially large increases in overall vehicle theft between 2019 and 2022.
+
+Based on these findings, local governments, law enforcement agencies, automobile manufacturers, and vehicle owners should continue working together on targeted prevention efforts. Recommended actions include expanding access to anti-theft devices, increasing awareness of available software updates, sharing timely information with affected owners, and directing prevention resources toward communities experiencing the greatest increases. These steps would provide a more focused response than treating vehicle theft as the same problem in every location.
