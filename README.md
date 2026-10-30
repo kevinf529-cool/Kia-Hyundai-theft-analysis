@@ -1,12 +1,8 @@
-# Kia-Hyundai-theft-analysis
+# Kia & Hyundai Vehicle Theft Analysis
 
-R-based data analysis and visualization of Kia and Hyundai vehicle theft trends across U.S. cities.
+**R Programming | Data Visualization | Data Storytelling**
 
-# Kia & Hyundai Vehicle Theft Data Story
-
-## Project Overview
-
-This project analyzes the sharp increase in Kia and Hyundai vehicle thefts across several U.S. cities. Using multiple datasets and R-based visualizations, the analysis examines how theft patterns changed over time, which locations experienced the largest increases, and how significant Kia and Hyundai thefts became within overall vehicle theft trends.
+This project examines Kia and Hyundai vehicle theft trends across selected U.S. cities. Using multiple datasets and R-based visualizations, the analysis explores changes over time, geographic differences, and opportunities to support targeted vehicle theft-prevention efforts.
 
 The project was designed as a data story for local governments, law enforcement agencies, vehicle owners, and other stakeholders interested in understanding and responding to the increase in vehicle theft.
 
