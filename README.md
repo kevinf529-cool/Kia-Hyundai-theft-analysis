@@ -88,3 +88,19 @@ Data preprocessing was performed to prepare records for visualization, and recor
 - Data storytelling
 - Audience-focused communication
 - Ethical interpretation of public data
+
+## R Markdown Analysis
+
+[View the Complete R Analysis](Kia_Hyundai_Theft_Analysis.Rmd)
+
+This R Markdown file contains the analysis and code used to examine Kia and Hyundai vehicle theft trends across selected U.S. cities.
+
+The analysis includes six visualizations exploring monthly theft trends, geographic differences, and the share of vehicle thefts involving Kia and Hyundai models.
+
+### Reproducibility
+
+The analysis uses four source datasets that were prepared separately for the visualizations.
+
+The R Markdown file is included in this repository. The original datasets are not currently included, so they must be obtained and placed in the appropriate file locations before the complete analysis can be rerun.
+
+The analysis was developed using R and packages including `ggplot2`, `dplyr`, `tidyr`, `readr`, and `readxl`.
